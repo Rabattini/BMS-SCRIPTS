@@ -10,9 +10,9 @@ def read_long(file):
 def write_long(file, value):
     file.write(struct.pack('<I', value))
 
-def compress_chunk(data):
+def compress_chunk(data, level):
     try:
-        compressed_data = zlib.compress(data)
+        compressed_data = zlib.compress(data, level)
         return compressed_data
     except zlib.error as e:
         print(f"Compression error: {e}")
@@ -26,7 +26,7 @@ def decompress_chunk(compressed_data):
         print(f"Decompression error: {e}")
         return None
 
-def compress_file(input_file_path, output_file_path):
+def compress_file(input_file_path, output_file_path, compression_level):
     with open(input_file_path, 'rb') as input_file, open(output_file_path, 'wb') as output_file:
         input_file.seek(0, 2)
         total_length = input_file.tell()
@@ -35,11 +35,11 @@ def compress_file(input_file_path, output_file_path):
         write_long(output_file, total_length)
 
         while True:
-            chunk = input_file.read(1024 * 1024)  # Read 1MB chunks
+            chunk = input_file.read(128 * 256)  # Read 1MB chunks
             if not chunk:
                 break
 
-            compressed_chunk = compress_chunk(chunk)
+            compressed_chunk = compress_chunk(chunk, compression_level)
             if compressed_chunk:
                 write_long(output_file, len(compressed_chunk))
                 output_file.write(compressed_chunk)
@@ -86,8 +86,9 @@ def decompress_action():
 def compress_action():
     input_path = input_entry.get()
     output_path = output_entry.get()
+    compression_level = int(compression_level_entry.get())
     if input_path and output_path:
-        compress_file(input_path, output_path)
+        compress_file(input_path, output_path, compression_level)
         messagebox.showinfo("Success", "File compressed successfully!")
     else:
         messagebox.showwarning("Input Error", "Please select both input and output files.")
@@ -98,6 +99,7 @@ root.title("MUA 3 - File Compressor/Decompressor - Made by Rabattini (Luke)")
 
 tk.Label(root, text="Input File:").grid(row=0, column=0, padx=10, pady=5)
 tk.Label(root, text="Output File:").grid(row=1, column=0, padx=10, pady=5)
+tk.Label(root, text="Compression Level (0-9):").grid(row=2, column=0, padx=10, pady=5)
 
 input_entry = tk.Entry(root, width=60)
 input_entry.grid(row=0, column=1, padx=10, pady=5)
@@ -107,7 +109,10 @@ output_entry = tk.Entry(root, width=60)
 output_entry.grid(row=1, column=1, padx=10, pady=5)
 tk.Button(root, text="Browse", command=browse_output_file).grid(row=1, column=2, padx=10, pady=5)
 
-tk.Button(root, text="Decompress", command=decompress_action).grid(row=2, column=1, padx=10, pady=10)
-tk.Button(root, text="Compress", command=compress_action).grid(row=2, column=2, padx=10, pady=10)
+compression_level_entry = tk.Entry(root, width=60)
+compression_level_entry.grid(row=2, column=1, padx=10, pady=5)
+
+tk.Button(root, text="Decompress", command=decompress_action).grid(row=3, column=1, padx=10, pady=10)
+tk.Button(root, text="Compress", command=compress_action).grid(row=3, column=2, padx=10, pady=10)
 
 root.mainloop()
